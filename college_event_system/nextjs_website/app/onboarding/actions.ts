@@ -1,6 +1,7 @@
 "use server";
 
 import { auth, clerkClient } from "@clerk/nextjs/server";
+import { createServiceClient } from "@/lib/supabase";
 
 function slugify(value: string): string {
   return value
@@ -11,7 +12,7 @@ function slugify(value: string): string {
 }
 
 export async function completeOnboarding(department: string, role: string) {
-  const { userId, getToken } = await auth();
+  const { userId } = await auth();
   if (!userId) return { success: false, error: "Not authorized" };
 
   try {
@@ -26,26 +27,27 @@ export async function completeOnboarding(department: string, role: string) {
       return { success: false, error: "No primary email found in Clerk profile." };
     }
 
-    const flaskUrl =
-      process.env.NEXT_PUBLIC_FLASK_API_URL ?? "http://localhost:5000";
+    const supabase = createServiceClient();
 
-    const deptRes = await fetch(`${flaskUrl}/api/departments`, {
-      method: "GET",
-      cache: "no-store",
-    });
+    const { data: departments, error: deptError } = await supabase
+      .from("departments")
+      .select("id, name, code")
+      .order("name", { ascending: true });
 
-    if (!deptRes.ok) {
-      return { success: false, error: "Could not load departments from API." };
+    if (deptError) {
+      return {
+        success: false,
+        error: `Could not load departments from database: ${deptError.message}`,
+      };
     }
 
-    const deptPayload = await deptRes.json();
-    const departments = (deptPayload?.departments ?? []) as Array<{
+    const departmentList = (departments ?? []) as Array<{
       id: string;
       name?: string;
       code?: string;
     }>;
 
-    const selected = departments.find((d) => {
+    const selected = departmentList.find((d) => {
       const nameSlug = slugify(d.name ?? "");
       const codeSlug = slugify(d.code ?? "");
       return nameSlug === department || codeSlug === department;
@@ -58,43 +60,49 @@ export async function completeOnboarding(department: string, role: string) {
       };
     }
 
-    const token = await getToken();
-    if (!token) {
-      return { success: false, error: "Could not create auth token for profile sync." };
-    }
+    const fullName =
+      `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() ||
+      user.username ||
+      "User";
 
-    const regRes = await fetch(`${flaskUrl}/api/auth/register`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        clerk_id: user.id,
-        name: `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() || user.username || "User",
-        email: primaryEmail,
-        role,
-        department_id: selected.id,
-      }),
-    });
+    const { data: upsertedUser, error: userError } = await supabase
+      .from("users")
+      .upsert(
+        {
+          clerk_id: user.id,
+          name: fullName,
+          email: primaryEmail,
+          role,
+          department_id: selected.id,
+        },
+        {
+          onConflict: "clerk_id",
+        }
+      )
+      .select("id")
+      .single();
 
-    const regData = await regRes.json().catch(() => ({}));
-    if (!regRes.ok) {
+    if (userError) {
       return {
         success: false,
-        error: regData?.error ?? "Failed to create user profile in database.",
+        error: `Failed to create user profile in database: ${userError.message}`,
       };
     }
 
     await client.users.updateUserMetadata(userId, {
       publicMetadata: {
         department,
-        role
-      }
+        department_id: selected.id,
+        role,
+        supabase_user_id: upsertedUser?.id,
+      },
     });
     return { success: true };
   } catch (error) {
     console.error("Error updating user metadata", error);
-    return { success: false, error: "Failed to update profile." };
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to update profile.",
+    };
   }
 }

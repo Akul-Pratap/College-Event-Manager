@@ -8,12 +8,14 @@ import { useUser } from "@clerk/nextjs";
 export default function OnboardingPage() {
   const [dept, setDept] = useState("computer-science");
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const router = useRouter();
   const { user, isLoaded } = useUser();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setErrorMessage(null);
     // Defaulting to "student" for open signups. Role upgrades are done by super_admin
     const res = await completeOnboarding(dept, "student");
     if (res.success) {
@@ -21,7 +23,7 @@ export default function OnboardingPage() {
       await user?.reload();
       router.push(`/dashboard/${dept}/student`);
     } else {
-      alert("Failed to save profile.");
+      setErrorMessage(res.error ?? "Failed to save profile.");
       setLoading(false);
     }
   };
@@ -51,6 +53,12 @@ export default function OnboardingPage() {
               <option value="management">Management (MBA)</option>
             </select>
           </div>
+
+          {errorMessage ? (
+            <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+              {errorMessage}
+            </div>
+          ) : null}
           
           <button 
             type="submit" 
