@@ -19,6 +19,14 @@ const DEPARTMENT_SLUG_TO_CODE: Record<string, string> = {
   management: "MBA",
 };
 
+const DEPARTMENT_CODE_TO_NAME: Record<string, string> = {
+  CS: "Computer Science",
+  EC: "Electronics",
+  ME: "Mechanical",
+  CE: "Civil",
+  MBA: "Management",
+};
+
 export async function completeOnboarding(department: string, role: string) {
   const { userId } = await auth();
   if (!userId) return { success: false, error: "Not authorized" };
@@ -79,6 +87,24 @@ export async function completeOnboarding(department: string, role: string) {
 
       if (deptByCode) {
         selected = deptByCode;
+      }
+
+      // Final fallback: if mapped department does not exist, create it.
+      if (!selected?.id) {
+        const mappedName = DEPARTMENT_CODE_TO_NAME[mappedCode] ?? department
+          .split("-")
+          .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+          .join(" ");
+
+        const { data: createdDept, error: createDeptError } = await supabase
+          .from("departments")
+          .insert({ name: mappedName, code: mappedCode })
+          .select("id, name, code")
+          .single();
+
+        if (!createDeptError && createdDept) {
+          selected = createdDept;
+        }
       }
     }
 
