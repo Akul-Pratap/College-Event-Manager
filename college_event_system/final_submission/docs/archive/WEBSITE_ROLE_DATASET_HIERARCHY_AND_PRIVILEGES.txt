@@ -1,0 +1,48 @@
+Website Role Hierarchy and Dataset Privileges
+
+Role Hierarchy (Website)
+1. super_admin
+2. hod
+3. faculty_coordinator
+4. class_incharge
+5. organizer
+6. volunteer
+7. cr
+8. student
+
+Policy Rules Implemented (Website)
+- HOD has broad dashboard access but cannot edit money collection.
+- Faculty coordinator cannot approve events.
+- A single person can hold two roles simultaneously (e.g. faculty_coordinator + class_incharge).
+- A student can also be assigned organizer, volunteer, or cr as a secondary role.
+  CR (Class Representative) is inherently a student with additional class-level privileges.
+  When set, a "Switch to [role] view" button appears in the student dashboard header.
+- Set secondary_role in Clerk user metadata (and Supabase users table) to add a second role to a user.
+- Permissions from both primary and secondary roles are merged automatically.
+- Only class advisor (class_incharge) and CR can edit class-level money entries.
+- Organizer can edit money collection only through event-specific organizer collection screens.
+- Super admin cannot edit money collection from website flows.
+- QR scan page is available as a shared route for any authenticated user in a department.
+
+Dataset and Privilege Matrix
+Dataset/Feature | super_admin | hod | faculty_coordinator | class_incharge | organizer | volunteer | cr | student
+Events (view) | yes | yes | yes | yes | yes | yes | yes | yes
+Events (create) | yes | no | yes | no | yes | no | no | no
+Event approvals | yes | yes | no | no | no | no | no | no
+Money collection (view) | yes | yes | yes | yes | yes | no | yes | no
+Money collection (edit) | no | no | yes (own class) | yes (own class) | yes (selected event) | no | yes (own class) | no
+Duty leave review | no | no | yes | no | no | no | no | no
+QR attendance scan | yes | yes | yes | yes | yes | yes | yes | yes
+Payment submission (UPI/cash flow) | no | no | no | no | no | no | no | yes
+
+Payment and QR Behavior
+- Paid events can carry a UPI ID at event creation time.
+- Student payment page generates an event-specific UPI deep link.
+- Student payment page renders a QR image from that event-specific UPI deep link.
+- Users can tap Open UPI App to redirect directly into UPI payment apps.
+
+Single editable source for website role hierarchy and permissions:
+college_event_system/nextjs_website/lib/role-policy.ts
+
+Note
+- This file documents website behavior. API/DB enforcement should remain aligned in Flask and SQL policies.

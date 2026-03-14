@@ -1,0 +1,5 @@
+name,email,password,role,department,secondary_role,roll_no,year,branch,section
+John Doe,john@ltsu.in,LTSU@12345,student,CS,,21CS001,3,CSE,A
+Jane Smith,jane@ltsu.in,LTSU@12345,hod,CS,,,,,
+Bob Faculty,bob@ltsu.in,LTSU@12345,faculty_coordinator,CS,,,,,
+Alice CR,alice@ltsu.in,LTSU@12345,student,CS,cr,21CS002,3,CSE,A

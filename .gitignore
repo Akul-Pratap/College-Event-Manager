@@ -1,0 +1,26 @@
+# Firebase Admin SDK service account keys — NEVER COMMIT
+*firebase-adminsdk*.json
+firebase-service-account.json
+service-account.json
+
+# Android Google Services (contains API keys)
+google-services.json
+GoogleService-Info.plist
+
+# SSH keys
+gitpushid
+gitpushid.pub
+*.pem
+*.key
+
+# Python virtual environments at repo root
+.venv*/
+venv*/
+
+# Backup env files with real secrets
+.env_backup*
+*.env.bak
+.env_backup.txt
+
+# IDE
+.vscode/

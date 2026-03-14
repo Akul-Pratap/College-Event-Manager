@@ -1,0 +1,397 @@
+# 📋 Master Plan v6.0
+## College Event Management System
+### Lamrin Tech Skills University
+
+> **Total Cost: ₹0 | IDE: VS Code | Stack: Next.js 14 + Flask + Flutter + Supabase**
+
+---
+
+## 1. Abstract
+
+The College Event Management System is a secure, full-stack web and mobile platform for Lamrin Tech Skills University. It handles event registration, club management, duty leave tracking, and payment collection across all departments with strict role-based access control — built entirely with free tools using VS Code.
+
+Built with Next.js 14, Flutter, Python Flask, and Supabase PostgreSQL, the platform serves 8 user roles with separate dashboards while sharing a single unified database with department-level Row Level Security isolation.
+
+---
+
+## 2. Tech Stack — ₹0 Total
+
+| Category | Technology | Cost | Free Limit |
+|---|---|---|---|
+| Website Framework | Next.js 14 (App Router) | Free | Unlimited |
+| Website Hosting | Vercel | Free | 100GB bandwidth/month |
+| UI Library | Tailwind CSS + shadcn/ui | Free | Unlimited |
+| Animations | Framer Motion | Free | Unlimited |
+| Authentication | Clerk | Free | 10,000 users/month |
+| Database | Supabase PostgreSQL | Free | 500MB storage |
+| Image Storage | Cloudinary | Free | 25GB storage |
+| Email | Resend | Free | 3,000 emails/month |
+| Rate Limiting | Upstash Redis | Free | 10,000 requests/day |
+| API Hosting | Railway | Free | No sleep, auto-deploy |
+| Mobile App | Flutter (Dart) | Free | Unlimited |
+| Push Notifications | Firebase FCM | Free | Unlimited |
+| AI Vision + Content | Google Gemini API | Free | 1,500 requests/day |
+| AI Threat + Chatbot | Groq API | Free | 500,000 tokens/day |
+| AI Image Hash | Ollama (local on PC) | Free | Unlimited |
+| Weather Theme | OpenWeatherMap API | Free | 1,000 calls/day |
+| Calendar | Google Calendar API | Free | Unlimited |
+| IDE | VS Code | Free | Unlimited |
+| AI Assistant 1 | GitHub Copilot Free | Free | 2,000 completions/month |
+| AI Assistant 2 | Codeium | Free | Unlimited completions |
+| API Testing | Thunder Client (VS Code) | Free | Unlimited |
+| Security Testing | Kali Linux + 7 tools | Free | Unlimited |
+| **Total Monthly Cost** | — | **₹0** | — |
+
+---
+
+## 3. VS Code Setup
+
+> Install VS Code from code.visualstudio.com
+
+### 3.1 All 8 Extensions (press Ctrl+Shift+X to open Extensions)
+
+| Extension | Publisher | Purpose |
+|---|---|---|
+| Python | Microsoft | Flask API development |
+| Flutter | Dart Code | App development — hot reload, debug |
+| Tailwind CSS IntelliSense | Bradlc | Autocomplete Tailwind classes |
+| ESLint | Microsoft | Catch JS/TS errors as you type |
+| Prettier | Prettier | Auto-format all code on save |
+| Thunder Client | Rangav | Test Flask API inside VS Code |
+| SQLite Viewer | Florian Klampfer | Browse local database |
+| GitLens | GitKraken | Git history and blame inline |
+
+### 3.2 GitHub Copilot Free
+1. Extensions panel → search **GitHub Copilot** → Install
+2. Sign in with GitHub when prompted
+3. Free tier: **2,000 completions/month + 50 chat messages**
+4. Open Copilot Chat with `Ctrl+Shift+I`
+
+### 3.3 Codeium (Unlimited Free)
+1. Extensions panel → search **Codeium** → Install
+2. Go to codeium.com → create free account
+3. `Ctrl+Shift+P` → **Codeium: Login** → sign in
+4. Unlimited AI completions — no monthly cap
+
+| Tool | Completions | Best Used For |
+|---|---|---|
+| GitHub Copilot Free | 2,000/month | Complex logic, multi-file generation via chat |
+| Codeium | Unlimited | Everyday inline completions, boilerplate |
+
+### 3.4 VS Code Settings (.vscode/settings.json)
+
+```json
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.tabSize": 2,
+  "editor.wordWrap": "on",
+  "[python]": { "editor.defaultFormatter": "ms-python.python" },
+  "[dart]": { "editor.defaultFormatter": "Dart-Code.dart-code" }
+}
+```
+
+### 3.5 MCP Servers for Copilot (Ctrl+Shift+P → Open User Settings JSON)
+
+```json
+{
+  "github.copilot.chat.mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-filesystem",
+               "C:\\Users\\YourName\\Desktop\\college_event_system"]
+    },
+    "fetch": { "command": "npx", "args": ["@modelcontextprotocol/server-fetch"] },
+    "puppeteer": { "command": "npx", "args": ["@modelcontextprotocol/server-puppeteer"] },
+    "firebase": { "command": "npx", "args": ["@gannonh/firebase-mcp"] }
+  }
+}
+```
+
+---
+
+## 4. User Roles & Access Control
+
+| Role | Scope | Key Permissions |
+|---|---|---|
+| Super Admin | University-wide | Global analytics, all departments, user management |
+| HOD | Department-wide | Approve/reject events, request status bar, gallery |
+| Faculty Coordinator | Club-specific | Club management, DL approvals, money collection |
+| Class Incharge | Class-specific | Edit money collection for their class only |
+| Student Organizer | Club + Event | Create events, form builder, WhatsApp drafter, panic button |
+| Volunteer | Event-specific | QR scanner, attendance, offline mode, duty leave |
+| Class Representative | Class-specific | Edit money collection for their class only |
+| Student | Dept-wide | AI For You feed, register, waitlist, calendar, join clubs |
+
+### 4.1 Department Isolation
+- Every table has `department_id` column
+- Supabase RLS policy: users can only access their own department's data
+- Login → Clerk reads department → redirects to `/dashboard/[dept]/[role]`
+- Super Admin has unrestricted access to all departments
+
+### 4.2 Multi-Stage Approval Workflow
+
+```
+Student Organizer creates event
+        │
+        ▼
+Stage 1: Faculty Coordinator reviews
+        │
+        ▼
+Stage 2: Venue conflict check (auto)
+   Conflict? ──► Flag to organizer
+        │ No conflict
+        ▼
+Stage 3: HOD approves/rejects
+        │ Approved
+        ▼
+Event goes LIVE
+  + Calendar links generated
+  + WhatsApp drafter unlocked
+  + Reminder scheduled (1 day before)
+```
+
+---
+
+## 5. Database — 22 Tables
+
+> All tables include `department_id`. Supabase RLS enforces isolation.
+
+| # | Table | Key Fields | Purpose |
+|---|---|---|---|
+| 1 | departments | id, name, code, hod_id | All departments |
+| 2 | users | id, clerk_id, name, roll_no, email, role, department_id, year, branch, section | All accounts |
+| 3 | clubs | id, name, description, logo_url, department_id | Club profiles |
+| 4 | club_members | id, club_id, user_id, designation, is_permanent | Club roster |
+| 5 | club_join_requests | id, club_id, user_id, request_type, status, event_id | Join applications |
+| 6 | events | id, title, date, venue_id, club_id, department_id, payment_type, fee, status | All events |
+| 7 | venues | id, name, capacity, is_shared | University venues |
+| 8 | venue_bookings | id, venue_id, event_id, start_time, end_time, status | Conflict tracking |
+| 9 | event_highlights | id, event_id, winner_name, prize, image_url | Past winners |
+| 10 | form_fields | id, event_id, label, field_type, options, is_required, order_index, validation_rules | Form builder |
+| 11 | form_responses | id, registration_id, field_id, answer | Student answers |
+| 12 | registrations | id, student_id, event_id, status, payment_method, payment_status | Registrations |
+| 13 | waitlist | id, event_id, student_id, position, notified_at | Auto waitlist |
+| 14 | payments | id, registration_id, utr_number, screenshot_url, screenshot_hash, ai_verified | Payments |
+| 15 | money_collection | id, event_id, year, branch, section, amount_collected | Class-wise money |
+| 16 | attendance | id, registration_id, marked_by, method, timestamp | Gate entry |
+| 17 | duty_leaves | id, user_id, event_id, name, class, batch, roll_no, date, start_time, end_time, status | DL records |
+| 18 | approval_requests | id, event_id, stage, approver_role, status, note | Multi-stage approvals |
+| 19 | gallery | id, event_id, image_url, uploaded_by, caption, type | Formal gallery |
+| 20 | notifications | id, user_id, type, message, is_read | In-app notifications |
+| 21 | email_logs | id, user_id, event_id, trigger_type, sent_at | Email audit |
+| 22 | login_attempts | id, clerk_user_id, ip_address, attempted_at, success, flagged_by_ai | Security log |
+
+---
+
+## 6. Complete Feature List
+
+### 6.1 Department System
+- Student selects department at registration
+- Each department has its own HOD
+- Login redirects to department-specific pages
+- All data scoped by `department_id` + Supabase RLS
+
+### 6.2 Club System
+- Club profile: name, description, logo, members, faculty coordinator
+- Designations: President, VP, Secretary, Treasurer, Event Head, PR & Marketing, Technical Lead, Volunteer Coordinator, + custom
+- Faculty Coordinator = Super Organizer (1 or many per club)
+- Student Organizers = permanent club members
+- Volunteers = event-specific only
+
+### 6.3 Custom Form Builder — All Google Form Features
+- Short Answer, Paragraph, Multiple Choice, Checkboxes, Dropdown
+- Linear Scale, Multiple Choice Grid, Checkbox Grid
+- Date Picker, Time Picker, File Upload
+- Section Headers, Image in Question, Video Embed, Page Break
+- Response Validation, Shuffle Options, Required Toggle
+- Form Deadline, Response Limit, AI Field Suggestions
+
+### 6.4 Payment System
+| Method | Flow |
+|---|---|
+| Free | Register → instant confirmation email |
+| UPI | Organizer adds UPI ID → student opens GPay/PhonePe → uploads screenshot + UTR → Gemini verifies → Ollama checks duplicate → organizer confirms |
+| Cash | Student registers → pays in person → organizer marks paid → email sent |
+
+### 6.5 WhatsApp Message Drafter
+- Gemini generates professional invitation message
+- Organizer previews and approves/replaces image
+- Message includes registration link (wa.me deep link)
+- Copy-paste ready
+
+### 6.6 Duty Leave System
+- Form: name, class, batch, roll no, date, start time, end time
+- Faculty Coordinator approves/rejects
+- On approval: WhatsApp draft + email auto-generated
+- All organizers can view DL list (read only)
+- Export as Excel or PDF
+
+### 6.7 HOD Request Status Bar
+- Pending requests shown as tap-to-expand status cards
+- Each card: subject, type, submitted by, date, status badge
+- Approve or Reject from detail view with mandatory reason
+
+### 6.8 Money Collection Report
+- Structured by Year → Branch → Section
+- Class Incharge and CR can edit their class data only
+- No cross-class access — strict isolation
+- Export as Excel or PDF
+
+### 6.9 Auto Theme System
+| Time | Theme |
+|---|---|
+| 6am – 12pm | Morning: warm whites, soft teal |
+| 12pm – 6pm | Afternoon: standard Charcoal & Teal |
+| 6pm – 10pm | Evening: deep charcoal, amber highlights |
+| 10pm – 6am | Night: full dark mode, teal glow |
+
+Weather override (OpenWeatherMap API):
+- Rainy → cool blue-gray tones
+- Sunny → bright warm teal
+- Cloudy → muted neutrals
+- Manual toggle always available in navbar
+
+### 6.10 Other Features
+- **Venue Booking + Conflict Detection**: auto-flags overlapping bookings
+- **Panic Button**: instant push to all registered attendees
+- **Add to Google/Outlook Calendar**: on every event page
+- **Waitlist**: auto-notifies next student when spot opens
+- **Formal Gallery**: signed notice images per event
+- **Event Analytics**: most active clubs, event engagement
+- **Co-curricular Transcript**: student activity record
+
+---
+
+## 7. AI Features
+
+| Feature | API | Description |
+|---|---|---|
+| For You event feed | Gemini | Personalised by dept, year, interests, past attendance |
+| UPI screenshot verify | Gemini Vision | Confirms screenshot is a genuine UPI receipt |
+| Duplicate screenshot | Ollama (local) | Image hash — blocks reuse of same screenshot |
+| Login threat detection | Groq | Flags suspicious login patterns |
+| Email + WhatsApp drafter | Gemini | Generates professional event content |
+| Form field suggestions | Gemini | Suggests fields based on event type |
+| Student chatbot | Groq | Answers natural language event questions |
+
+---
+
+## 8. Security — OWASP Top 10
+
+| OWASP Risk | Protection | Status |
+|---|---|---|
+| A01 Broken Access Control | Role decorators + Next.js middleware + Supabase RLS | ✅ Protected |
+| A02 Cryptographic Failures | Bcrypt, AES-256 QR, HTTPS/TLS, signed Cloudinary URLs | ✅ Protected |
+| A03 Injection Attacks | SQLAlchemy ORM — zero raw SQL | ✅ Protected |
+| A04 Insecure Design | Multi-stage approval, conflict detection, AI fraud detection | ✅ Protected |
+| A05 Security Misconfiguration | Debug off, Flask-Talisman headers, secrets in env vars | ✅ Protected |
+| A06 Vulnerable Components | Pinned dependencies, Nikto scan | ✅ Protected |
+| A07 Authentication Failures | Clerk, Upstash rate limit, IP block after 10 fails, JWT | ✅ Protected |
+| A08 Software Integrity Failures | UTR uniqueness, Ollama hash, Gemini Vision verify | ✅ Protected |
+| A09 Logging & Monitoring | login_attempts, email_logs, Groq threat detection | ✅ Protected |
+| A10 SSRF | Hardcoded endpoints, whitelist-only external calls | ✅ Protected |
+
+---
+
+## 9. Security Tools (Kali Linux)
+
+| Tool | Test | Command | Expected Result |
+|---|---|---|---|
+| Burp Suite | Access control bypass | Intercept POST → change ticket_count to 99 | HTTP 403 Forbidden |
+| Nmap | Port scan | `nmap -sV -p- localhost` | Only port 5000 open |
+| SQLMap | SQL injection | `sqlmap -u http://localhost:5000/api/login --data='email=&password=' --level=3` | Not injectable |
+| Nikto | Misconfiguration | `nikto -h http://localhost:5000` | Security headers present |
+| Hydra | Brute force | `hydra -l admin@ltsu.edu -P wordlist.txt localhost http-post-form '/api/login:...'` | IP blocked after 10 |
+| Wireshark | Auth verify | Capture QR scan API call | Bearer token visible |
+| CyberChef | QR decrypt | AES Decrypt with secret key | Readable ticket data |
+
+---
+
+## 10. 3-Day Execution Plan
+
+### Day 1 — Setup + Next.js Website
+| Step | Task |
+|---|---|
+| 1 | Install Node.js, Python, Flutter, Git, VS Code + all 8 extensions + Copilot Free + Codeium |
+| 2 | Create all 12 free accounts |
+| 3 | Configure MCP servers in VS Code |
+| 4 | Create Next.js project + install dependencies + .env.local |
+| 5 | Landing page + upcoming events + past highlights |
+| 6 | Student dashboard: AI feed + registration + payment |
+| 7 | Organizer: create event + form builder + WhatsApp drafter + panic button |
+| 8 | HOD approvals + Faculty Coordinator: club + DL + money |
+| 9 | Volunteer: QR scanner + offline. Class Incharge/CR. Super Admin |
+
+### Day 2 — Flask API + AI + Flutter
+| Step | Task |
+|---|---|
+| 1 | Flask project + venv + install packages + deploy to Railway |
+| 2 | All 22 database models + JWT middleware + RBAC decorators |
+| 3 | Gemini Vision: payment verify + email + form suggestions |
+| 4 | Groq: threat detection + chatbot |
+| 5 | Ollama: image hash + UTR uniqueness |
+| 6 | Venue conflict detection + multi-stage approval workflow |
+| 7 | Flutter: auth + student + organizer screens |
+| 8 | Flutter: HOD + faculty coordinator + volunteer + QR scanner + offline |
+| 9 | Flutter: Firebase push + build release APK |
+
+### Day 3 — Kali Testing + Docs
+| Step | Task |
+|---|---|
+| 1 | Boot Kali → run 7 tools → 21 screenshots (3 per tool) |
+| 2 | Website screenshots: all 8 role dashboards |
+| 3 | Flutter app screenshots: all screens |
+| 4 | Insert screenshots into report |
+| 5 | Generate presentation — 18 slides |
+| 6 | Final review, zip code, submit |
+
+---
+
+## 11. Cybersecurity Checklist
+
+| Item | Status | Detail |
+|---|---|---|
+| HTTPS | ✅ YES | Vercel + Railway enforce HTTPS. Flask-Talisman HSTS. |
+| RBAC | ✅ YES | 8 roles via Clerk + middleware + Supabase RLS |
+| Password Hashing | ✅ YES | Bcrypt with salt via Clerk |
+| SQL Injection | ✅ YES | SQLAlchemy ORM — zero raw SQL |
+| XSS Protection | ✅ YES | DOMPurify on all notice/form content |
+| Session Handling | ✅ YES | Clerk tokens + 15min timeout + Upstash |
+| Input Validation | ✅ YES | Server-side Flask + Cloudinary file type check |
+| Firewall | ✅ YES | Railway + Vercel DDoS protection |
+| Logging | ✅ YES | login_attempts + email_logs + Groq AI |
+| Dept Isolation | ✅ YES | Supabase RLS on all 22 tables |
+| Venue Conflict | ✅ YES | Auto overlap detection |
+| AI Fraud Detection | ✅ YES | Gemini Vision + Ollama hash + UTR uniqueness |
+
+---
+
+## 12. Future Improvements
+
+- Multi-factor authentication via OTP
+- Zero Trust Architecture
+- Razorpay payment gateway
+- iOS Flutter app
+- AI-generated co-curricular certificates
+- Real-time venue occupancy tracking
+- Social sharing with Open Graph preview cards
+
+---
+
+## 13. References
+
+- OWASP Top 10 2021 — owasp.org/Top10
+- Next.js 14 Docs — nextjs.org/docs
+- Clerk Docs — clerk.com/docs
+- Supabase RLS — supabase.com/docs/guides/auth/row-level-security
+- Flask Docs — flask.palletsprojects.com
+- Flutter Docs — docs.flutter.dev
+- Framer Motion — framer.com/motion
+- Google Gemini API — ai.google.dev/docs
+- Groq API — console.groq.com/docs
+- Codeium — codeium.com
+- GitHub Copilot Free — github.com/features/copilot
+- Thunder Client — thunderclient.com
+- Railway Docs — docs.railway.app
+- OpenWeatherMap API — openweathermap.org/api

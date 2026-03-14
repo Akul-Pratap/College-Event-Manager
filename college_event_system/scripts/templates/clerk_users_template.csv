@@ -1,0 +1,9 @@
+name,email,role,secondary_role,department,roll_no,year,branch,section,password
+Super Admin,admin.test@ltsu.ac.in,super_admin,,,,,,,
+HOD User,hod.test@ltsu.ac.in,hod,,CS,,,,,
+Faculty Coordinator,faculty.test@ltsu.ac.in,faculty_coordinator,,CS,,,,,
+Class Incharge,classincharge.test@ltsu.ac.in,class_incharge,,CS,,,,,
+Organizer User,organizer.test@ltsu.ac.in,organizer,,CSE,ORG001,3,CSE,A,
+Volunteer User,volunteer.test@ltsu.ac.in,volunteer,,CSE,VOL001,2,CSE,A,
+CR User,cr.test@ltsu.ac.in,student,cr,CSE,CR001,2,CSE,A,
+Student User,student.test@ltsu.ac.in,student,,CSE,STU001,2,CSE,A,

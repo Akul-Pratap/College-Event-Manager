@@ -1,0 +1,72 @@
+name: Website CI and Deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-nextjs:
+    runs-on: ubuntu-latest
+    env:
+      SKIP_ENV_VALIDATION: true
+    defaults:
+      run:
+        working-directory: college_event_system/nextjs_website
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: college_event_system/nextjs_website/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Lint website
+        run: npm run lint
+      - name: Build website
+        run: npm run build
+
+  deploy-nextjs:
+    needs: test-nextjs
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    env:
+      SKIP_ENV_VALIDATION: true
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    defaults:
+      run:
+        working-directory: college_event_system/nextjs_website
+    steps:
+      - uses: actions/checkout@v3
+      - name: Validate required Vercel secrets
+        run: |
+          missing=0
+          for var in VERCEL_TOKEN VERCEL_ORG_ID VERCEL_PROJECT_ID; do
+            if [ -z "${!var}" ]; then
+              echo "::error title=Missing GitHub Secret::$var is not configured in repository secrets"
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            echo "Add these in GitHub: Settings -> Secrets and variables -> Actions"
+            exit 1
+          fi
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: college_event_system/nextjs_website/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Pull Vercel environment
+        run: npx vercel pull --yes --environment=production --token="${VERCEL_TOKEN}"
+      - name: Build with Vercel
+        run: npx vercel build --prod --token="${VERCEL_TOKEN}"
+      - name: Deploy to Vercel
+        run: npx vercel deploy --prebuilt --prod --token="${VERCEL_TOKEN}"

@@ -1,0 +1,44 @@
+{
+  "name": "ltsu-events",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "node scripts/validate-env.js && next build",
+    "start": "next start",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@clerk/nextjs": "^7.0.4",
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
+    "@react-email/components": "^1.0.9",
+    "@sentry/nextjs": "^10.43.0",
+    "@supabase/supabase-js": "^2.99.1",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.37.0",
+    "cloudinary": "^2.9.0",
+    "date-fns": "^4.1.0",
+    "framer-motion": "^12.36.0",
+    "lucide-react": "^0.577.0",
+    "next": "^16.1.6",
+    "next-cloudinary": "^6.17.5",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-email": "^5.2.9",
+    "react-hot-toast": "^2.6.0",
+    "resend": "^6.9.3"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "autoprefixer": "^10.4.27",
+    "eslint": "^9.39.0",
+    "eslint-config-next": "16.1.6",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.19",
+    "typescript": "^5"
+  }
+}

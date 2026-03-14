@@ -1,0 +1,57 @@
+# Node
+node_modules/
+.next/
+out/
+build/
+dist/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+venv/
+.venv/
+.venv*/
+env/
+*.egg-info/
+
+# Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# Environment files — NEVER COMMIT
+.env
+.env.local
+.env.*.local
+.env.production
+flask_api/.env
+nextjs_website/.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDE
+.vscode/settings.json
+
+# Logs
+*.log
+logs/
+
+# APK / AAB (distribute separately)
+*.apk
+*.aab
+
+# Vercel
+.vercel
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
