@@ -11,6 +11,14 @@ function slugify(value: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
+const DEPARTMENT_SLUG_TO_CODE: Record<string, string> = {
+  "computer-science": "CS",
+  electronics: "EC",
+  mechanical: "ME",
+  civil: "CE",
+  management: "MBA",
+};
+
 export async function completeOnboarding(department: string, role: string) {
   const { userId } = await auth();
   if (!userId) return { success: false, error: "Not authorized" };
@@ -47,16 +55,38 @@ export async function completeOnboarding(department: string, role: string) {
       code?: string;
     }>;
 
-    const selected = departmentList.find((d) => {
+    let selected = departmentList.find((d) => {
       const nameSlug = slugify(d.name ?? "");
       const codeSlug = slugify(d.code ?? "");
       return nameSlug === department || codeSlug === department;
     });
 
+    // Fallback: map known UI slugs to canonical DB codes and re-query directly.
     if (!selected?.id) {
+      const mappedCode = DEPARTMENT_SLUG_TO_CODE[department] ?? department.toUpperCase();
+      const { data: deptByCode, error: deptByCodeError } = await supabase
+        .from("departments")
+        .select("id, name, code")
+        .eq("code", mappedCode)
+        .maybeSingle();
+
+      if (deptByCodeError) {
+        return {
+          success: false,
+          error: `Department lookup failed: ${deptByCodeError.message}`,
+        };
+      }
+
+      if (deptByCode) {
+        selected = deptByCode;
+      }
+    }
+
+    if (!selected?.id) {
+      const available = departmentList.map((d) => d.code || d.name || "unknown").join(", ");
       return {
         success: false,
-        error: `Department '${department}' was not found in database.`,
+        error: `Department '${department}' was not found in database. Available: ${available || "none"}.`,
       };
     }
 
