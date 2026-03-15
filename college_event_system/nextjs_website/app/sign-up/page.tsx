@@ -2,13 +2,14 @@ import React from "react";
 import { SignUp } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+import { toRouteRoleSegment } from "@/lib/role-route";
 
 export default async function SignUpPage() {
   const { userId, sessionClaims } = await auth();
 
   if (userId) {
     const metadata = (sessionClaims?.metadata as Record<string, string>) ?? {};
-    const role = metadata.role;
+    const role = toRouteRoleSegment(metadata.role);
     const department = metadata.department;
 
     if (role && department) {

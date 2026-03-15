@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { completeOnboarding } from "./actions";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
+import { toCanonicalRole, toRouteRoleSegment } from "@/lib/role-route";
 
 export default function OnboardingPage() {
   const [dept, setDept] = useState("computer-science");
@@ -11,10 +12,10 @@ export default function OnboardingPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const router = useRouter();
   const { user, isLoaded } = useUser();
-  const existingRole =
-    typeof user?.publicMetadata?.role === "string" && user.publicMetadata.role
-      ? user.publicMetadata.role
-      : "student";
+  const existingRole = toCanonicalRole(
+    typeof user?.publicMetadata?.role === "string" ? user.publicMetadata.role : null
+  ) ?? "student";
+  const existingRoleSegment = toRouteRoleSegment(existingRole) ?? "student";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,7 +26,7 @@ export default function OnboardingPage() {
     if (res.success) {
       // Must reload session info fully
       await user?.reload();
-      router.push(`/dashboard/${dept}/${existingRole}`);
+      router.push(`/dashboard/${dept}/${existingRoleSegment}`);
     } else {
       setErrorMessage(res.error ?? "Failed to save profile.");
       setLoading(false);

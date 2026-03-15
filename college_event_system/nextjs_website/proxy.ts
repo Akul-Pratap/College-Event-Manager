@@ -1,5 +1,10 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import {
+  routeSegmentToCanonicalRole,
+  toCanonicalRole,
+  toRouteRoleSegment,
+} from "@/lib/role-route";
 
 const isPublicRoute = createRouteMatcher([
   "/",
@@ -25,16 +30,17 @@ export default clerkMiddleware(async (auth, req) => {
   }
 
   const metadata = (sessionClaims?.metadata as Record<string, string>) ?? {};
-  const role = metadata.role as string | undefined;
+  const role = toCanonicalRole(metadata.role);
+  const roleSegment = toRouteRoleSegment(role);
   const department = metadata.department as string | undefined;
 
   const url = req.nextUrl.pathname;
 
   // Redirect /dashboard root to role-specific dashboard
   if (url === "/dashboard" || url === "/dashboard/") {
-    if (role && department) {
+    if (roleSegment && department) {
       return NextResponse.redirect(
-        new URL(`/dashboard/${department}/${role}`, req.url)
+        new URL(`/dashboard/${department}/${roleSegment}`, req.url)
       );
     }
     // Profile incomplete — send to onboarding to collect department
@@ -48,6 +54,7 @@ export default clerkMiddleware(async (auth, req) => {
     // segments[0] = "dashboard", segments[1] = dept, segments[2] = role
     const urlDept = segments[1];
     const urlRole = segments[2];
+    const urlCanonicalRole = routeSegmentToCanonicalRole(urlRole);
 
     // Super admin can access any department
     if (role === "super_admin") {
@@ -55,16 +62,16 @@ export default clerkMiddleware(async (auth, req) => {
     }
 
     // Block cross-department access
-    if (urlDept && department && urlDept !== department) {
+    if (urlDept && department && urlDept !== department && roleSegment) {
       return NextResponse.redirect(
-        new URL(`/dashboard/${department}/${role}`, req.url)
+        new URL(`/dashboard/${department}/${roleSegment}`, req.url)
       );
     }
 
     // Block wrong-role access
-    if (urlRole && role && urlRole !== role) {
+    if (urlRole && role && urlCanonicalRole && urlCanonicalRole !== role && roleSegment) {
       return NextResponse.redirect(
-        new URL(`/dashboard/${department}/${role}`, req.url)
+        new URL(`/dashboard/${department}/${roleSegment}`, req.url)
       );
     }
   }

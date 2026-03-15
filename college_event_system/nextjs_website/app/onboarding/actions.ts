@@ -2,6 +2,7 @@
 
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { createServiceClient } from "@/lib/supabase";
+import { toCanonicalRole } from "@/lib/role-route";
 
 function slugify(value: string): string {
   return value
@@ -34,11 +35,7 @@ export async function completeOnboarding(department: string, role: string) {
   try {
     const client = await clerkClient();
     const user = await client.users.getUser(userId);
-    const existingRole =
-      typeof user.publicMetadata?.role === "string" && user.publicMetadata.role
-        ? user.publicMetadata.role
-        : "";
-    const effectiveRole = existingRole || role || "student";
+    const requestedRole = toCanonicalRole(role);
 
     const primaryEmail = user.emailAddresses.find(
       (e) => e.id === user.primaryEmailAddressId
@@ -133,7 +130,7 @@ export async function completeOnboarding(department: string, role: string) {
           clerk_id: user.id,
           name: fullName,
           email: primaryEmail,
-          role: effectiveRole,
+          role: requestedRole ?? "student",
           department_id: selected.id,
         },
         {
@@ -149,6 +146,18 @@ export async function completeOnboarding(department: string, role: string) {
         error: `Failed to create user profile in database: ${userError.message}`,
       };
     }
+
+    const { data: syncedUser } = await supabase
+      .from("users")
+      .select("role")
+      .eq("clerk_id", user.id)
+      .maybeSingle();
+
+    const effectiveRole =
+      toCanonicalRole((syncedUser?.role as string | undefined) ?? null) ??
+      requestedRole ??
+      toCanonicalRole(typeof user.publicMetadata?.role === "string" ? user.publicMetadata.role : null) ??
+      "student";
 
     await client.users.updateUserMetadata(userId, {
       publicMetadata: {
