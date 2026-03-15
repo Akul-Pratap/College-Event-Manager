@@ -225,7 +225,7 @@ def get_events_by_department(dept_id: str):
 
 
 def get_event_by_id(event_id: str):
-    return (
+    event = (
         supabase.table("events")
         .select("*, clubs(name, logo_url), venues(name, capacity), departments(name)")
         .eq("id", event_id)
@@ -233,6 +233,41 @@ def get_event_by_id(event_id: str):
         .execute()
         .data
     )
+
+    if not event:
+        return event
+
+    gallery_rows = (
+        supabase.table("gallery")
+        .select("image_url")
+        .eq("event_id", event_id)
+        .order("created_at", desc=True)
+        .limit(1)
+        .execute()
+        .data
+    ) or []
+
+    highlight_rows = (
+        supabase.table("event_highlights")
+        .select("image_url")
+        .eq("event_id", event_id)
+        .order("created_at", desc=True)
+        .limit(1)
+        .execute()
+        .data
+    ) or []
+
+    primary_image = None
+    if gallery_rows and gallery_rows[0].get("image_url"):
+        primary_image = gallery_rows[0]["image_url"]
+    elif highlight_rows and highlight_rows[0].get("image_url"):
+        primary_image = highlight_rows[0]["image_url"]
+
+    if primary_image:
+        event["image_url"] = primary_image
+        event["bg_image"] = primary_image
+
+    return event
 
 
 def get_all_live_events():
