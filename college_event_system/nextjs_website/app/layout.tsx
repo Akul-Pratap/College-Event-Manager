@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
+import GlobalAuthActions from "@/components/GlobalAuthActions";
 import "./globals.css";
 
 const inter = Inter({
@@ -78,6 +79,7 @@ export default function RootLayout({
           <link rel="icon" href="/favicon.ico" sizes="any" />
         </head>
         <body className={`${inter.variable} font-sans antialiased`}>
+          <GlobalAuthActions />
           {children}
         </body>
       </html>
