@@ -11,17 +11,21 @@ export default function OnboardingPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const router = useRouter();
   const { user, isLoaded } = useUser();
+  const existingRole =
+    typeof user?.publicMetadata?.role === "string" && user.publicMetadata.role
+      ? user.publicMetadata.role
+      : "student";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setErrorMessage(null);
-    // Defaulting to "student" for open signups. Role upgrades are done by super_admin
-    const res = await completeOnboarding(dept, "student");
+    // Keep an existing assigned role (e.g. hod/faculty) and only default new users to student.
+    const res = await completeOnboarding(dept, existingRole);
     if (res.success) {
       // Must reload session info fully
       await user?.reload();
-      router.push(`/dashboard/${dept}/student`);
+      router.push(`/dashboard/${dept}/${existingRole}`);
     } else {
       setErrorMessage(res.error ?? "Failed to save profile.");
       setLoading(false);

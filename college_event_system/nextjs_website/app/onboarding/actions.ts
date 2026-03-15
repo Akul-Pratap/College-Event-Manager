@@ -34,6 +34,11 @@ export async function completeOnboarding(department: string, role: string) {
   try {
     const client = await clerkClient();
     const user = await client.users.getUser(userId);
+    const existingRole =
+      typeof user.publicMetadata?.role === "string" && user.publicMetadata.role
+        ? user.publicMetadata.role
+        : "";
+    const effectiveRole = existingRole || role || "student";
 
     const primaryEmail = user.emailAddresses.find(
       (e) => e.id === user.primaryEmailAddressId
@@ -128,7 +133,7 @@ export async function completeOnboarding(department: string, role: string) {
           clerk_id: user.id,
           name: fullName,
           email: primaryEmail,
-          role,
+          role: effectiveRole,
           department_id: selected.id,
         },
         {
@@ -149,7 +154,7 @@ export async function completeOnboarding(department: string, role: string) {
       publicMetadata: {
         department,
         department_id: selected.id,
-        role,
+        role: effectiveRole,
         supabase_user_id: upsertedUser?.id,
       },
     });
