@@ -12,6 +12,13 @@ where registration_id in (
   join public.events e on e.id = r.event_id
   where e.title like '[Dummy] %'
 )
+or registration_id in (
+  select r.id from public.registrations r
+  where r.event_id in (
+    select e.id from public.events e
+    where e.created_by in (select id from public.users where clerk_id like 'temp_%')
+  )
+)
 or field_id in (
   select id from public.form_fields where event_id in (
    select id from public.events where title like '[Dummy] %'
@@ -24,6 +31,12 @@ where registration_id in (
    select id from public.events where title like '[Dummy] %'
   )
 )
+or registration_id in (
+  select id from public.registrations where event_id in (
+    select e.id from public.events e
+    where e.created_by in (select id from public.users where clerk_id like 'temp_%')
+  )
+)
 or marked_by in (select id from public.users where clerk_id like 'temp_%');
 
 delete from public.payments
@@ -31,51 +44,99 @@ where registration_id in (
   select id from public.registrations where event_id in (
    select id from public.events where title like '[Dummy] %'
   )
+)
+or registration_id in (
+  select id from public.registrations where event_id in (
+    select e.id from public.events e
+    where e.created_by in (select id from public.users where clerk_id like 'temp_%')
+  )
 );
 
 delete from public.waitlist
 where event_id in (select id from public.events where title like '[Dummy] %')
+   or event_id in (
+    select e.id from public.events e
+    where e.created_by in (select id from public.users where clerk_id like 'temp_%')
+  )
   or student_id in (select id from public.users where clerk_id like 'temp_%');
 
 delete from public.money_collection
 where event_id in (select id from public.events where title like '[Dummy] %')
+   or event_id in (
+    select e.id from public.events e
+    where e.created_by in (select id from public.users where clerk_id like 'temp_%')
+  )
   or collected_by in (select id from public.users where clerk_id like 'temp_%')
   or approved_by in (select id from public.users where clerk_id like 'temp_%');
 
 delete from public.duty_leaves
 where event_id in (select id from public.events where title like '[Dummy] %')
+   or event_id in (
+    select e.id from public.events e
+    where e.created_by in (select id from public.users where clerk_id like 'temp_%')
+  )
   or user_id in (select id from public.users where clerk_id like 'temp_%')
   or approved_by in (select id from public.users where clerk_id like 'temp_%');
 
 delete from public.approval_requests
 where event_id in (select id from public.events where title like '[Dummy] %')
+   or event_id in (
+    select e.id from public.events e
+    where e.created_by in (select id from public.users where clerk_id like 'temp_%')
+  )
   or approver_id in (select id from public.users where clerk_id like 'temp_%');
 
 delete from public.gallery
 where event_id in (select id from public.events where title like '[Dummy] %')
+   or event_id in (
+    select e.id from public.events e
+    where e.created_by in (select id from public.users where clerk_id like 'temp_%')
+  )
   or uploaded_by in (select id from public.users where clerk_id like 'temp_%')
   or caption like '[Dummy] %';
 
 delete from public.event_highlights
 where event_id in (select id from public.events where title like '[Dummy] %')
+   or event_id in (
+    select e.id from public.events e
+    where e.created_by in (select id from public.users where clerk_id like 'temp_%')
+  )
   or winner_name like 'Dummy %'
   or description like '[Dummy] %';
 
 delete from public.venue_bookings
 where event_id in (select id from public.events where title like '[Dummy] %')
+   or event_id in (
+    select e.id from public.events e
+    where e.created_by in (select id from public.users where clerk_id like 'temp_%')
+  )
   or venue_id in (select id from public.venues where name like '[Dummy] %');
 
 delete from public.form_fields
 where event_id in (select id from public.events where title like '[Dummy] %');
 
+delete from public.form_fields
+where event_id in (
+  select e.id from public.events e
+  where e.created_by in (select id from public.users where clerk_id like 'temp_%')
+);
+
 delete from public.registrations
 where event_id in (select id from public.events where title like '[Dummy] %')
+   or event_id in (
+    select e.id from public.events e
+    where e.created_by in (select id from public.users where clerk_id like 'temp_%')
+  )
   or student_id in (select id from public.users where clerk_id like 'temp_%');
 
 delete from public.club_join_requests
 where club_id in (select id from public.clubs where name like '[Dummy] %')
   or user_id in (select id from public.users where clerk_id like 'temp_%')
-  or event_id in (select id from public.events where title like '[Dummy] %');
+   or event_id in (select id from public.events where title like '[Dummy] %')
+   or event_id in (
+    select e.id from public.events e
+    where e.created_by in (select id from public.users where clerk_id like 'temp_%')
+  );
 
 delete from public.club_members
 where club_id in (select id from public.clubs where name like '[Dummy] %')
@@ -87,7 +148,11 @@ where user_id in (select id from public.users where clerk_id like 'temp_%')
 
 delete from public.email_logs
 where user_id in (select id from public.users where clerk_id like 'temp_%')
-  or event_id in (select id from public.events where title like '[Dummy] %');
+   or event_id in (select id from public.events where title like '[Dummy] %')
+   or event_id in (
+    select e.id from public.events e
+    where e.created_by in (select id from public.users where clerk_id like 'temp_%')
+  );
 
 delete from public.login_attempts
 where clerk_user_id like 'temp_%';
@@ -96,9 +161,16 @@ delete from public.role_delegations
 where granter_user_id in (select id from public.users where clerk_id like 'temp_%')
   or grantee_user_id in (select id from public.users where clerk_id like 'temp_%');
 
-delete from public.events where title like '[Dummy] %';
+delete from public.events
+where title like '[Dummy] %'
+  or created_by in (select id from public.users where clerk_id like 'temp_%');
 delete from public.clubs where name like '[Dummy] %';
 delete from public.venues where name like '[Dummy] %';
+
+update public.departments
+set hod_id = null
+where hod_id in (select id from public.users where clerk_id like 'temp_%');
+
 delete from public.users
 where clerk_id like 'temp_%'
   or email in (
