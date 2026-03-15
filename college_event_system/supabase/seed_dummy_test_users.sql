@@ -194,10 +194,6 @@ where title like '[Dummy] %'
 delete from public.clubs where name like '[Dummy] %';
 delete from public.venues where name like '[Dummy] %';
 
-update public.departments
-set hod_id = null
-where hod_id in (select id from public.users where clerk_id like 'temp_%');
-
 delete from public.users where clerk_id like 'temp_%';
 
 -- Seed users.
@@ -231,11 +227,6 @@ select
   u.branch,
   u.section
 from user_rows u;
-
--- Link HOD to CS department.
-update public.departments
-set hod_id = (select id from public.users where clerk_id = 'temp_hod')
-where code = 'CS';
 
 -- Clubs and memberships.
 insert into public.clubs (name, description, logo_url, department_id)
@@ -411,19 +402,19 @@ from public.events e where e.title = '[Dummy] Robotics Workshop';
 
 -- Registrations and responses.
 insert into public.registrations (student_id, event_id, department_id, status, payment_method, payment_status)
-select u.id, e.id, e.department_id, 'registered', 'upi', 'verified'
+select u.id, e.id, e.department_id, 'confirmed', 'upi', 'approved'
 from public.users u
 join public.events e on e.title = '[Dummy] AI Hackathon 2026'
 where u.clerk_id = 'temp_student';
 
 insert into public.registrations (student_id, event_id, department_id, status, payment_method, payment_status)
-select u.id, e.id, e.department_id, 'registered', 'free', 'not_required'
+select u.id, e.id, e.department_id, 'confirmed', 'not_required', 'not_required'
 from public.users u
 join public.events e on e.title = '[Dummy] Placement Briefing'
 where u.clerk_id = 'temp_cr';
 
 insert into public.registrations (student_id, event_id, department_id, status, payment_method, payment_status)
-select u.id, e.id, e.department_id, 'waitlisted', 'free', 'not_required'
+select u.id, e.id, e.department_id, 'waitlisted', 'not_required', 'not_required'
 from public.users u
 join public.events e on e.title = '[Dummy] Robotics Workshop'
 where u.clerk_id = 'temp_volunteer';
@@ -443,8 +434,8 @@ from public.events e
 join public.users u on u.clerk_id = 'temp_volunteer'
 where e.title = '[Dummy] Robotics Workshop';
 
-insert into public.payments (registration_id, department_id, utr_number, screenshot_url, screenshot_hash, ai_verified, status)
-select r.id, r.department_id, 'DUMMYUTR001', 'https://picsum.photos/seed/ltsu-payment/900/1400', 'dummyhash001', true, 'verified'
+insert into public.payments (registration_id, department_id, amount, transaction_id, screenshot_url, verified_by, status)
+select r.id, r.department_id, 250, 'DUMMYUTR001', 'https://picsum.photos/seed/ltsu-payment/900/1400', (select id from public.users where clerk_id = 'temp_faculty'), 'approved'
 from public.registrations r
 join public.events e on e.id = r.event_id
 where e.title = '[Dummy] AI Hackathon 2026'
@@ -460,25 +451,19 @@ where e.title = '[Dummy] AI Hackathon 2026';
 insert into public.attendance (registration_id, department_id, marked_by, method)
 select r.id, r.department_id,
   (select id from public.users where clerk_id = 'temp_volunteer'),
-  'qr'
+  'qr_scan'
 from public.registrations r
 join public.events e on e.id = r.event_id
 where e.title = '[Dummy] Placement Briefing';
 
-insert into public.duty_leaves (user_id, event_id, department_id, name, class, batch, roll_no, date, start_time, end_time, status, approved_by)
+insert into public.duty_leaves (user_id, event_id, department_id, status, approved_by, reason)
 select
   u.id,
   e.id,
   e.department_id,
-  u.name,
-  'B.Tech CSE',
-  coalesce(u.year, '2'),
-  coalesce(u.roll_no, 'NA'),
-  (e.date at time zone 'utc')::date,
-  '09:00',
-  '13:00',
   'approved',
-  (select id from public.users where clerk_id = 'temp_faculty')
+  (select id from public.users where clerk_id = 'temp_faculty'),
+  '[Dummy] Duty leave approved for seeded event participation.'
 from public.users u
 join public.events e on e.title = '[Dummy] AI Hackathon 2026'
 where u.clerk_id in ('temp_student', 'temp_cr');
@@ -497,7 +482,7 @@ from public.events e where e.title = '[Dummy] AI Hackathon 2026';
 insert into public.gallery (event_id, department_id, image_url, uploaded_by, caption, type)
 select e.id, e.department_id, 'https://picsum.photos/seed/ltsu-workshop-gallery/1400/900',
   (select id from public.users where clerk_id = 'temp_organizer'),
-  '[Dummy] Robotics workshop promo image', 'poster'
+  '[Dummy] Robotics workshop promo image', 'notice'
 from public.events e where e.title = '[Dummy] Robotics Workshop';
 
 -- Notifications, email logs, login attempts, delegation.

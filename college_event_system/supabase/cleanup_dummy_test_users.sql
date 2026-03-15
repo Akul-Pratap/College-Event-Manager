@@ -167,10 +167,6 @@ where title like '[Dummy] %'
 delete from public.clubs where name like '[Dummy] %';
 delete from public.venues where name like '[Dummy] %';
 
-update public.departments
-set hod_id = null
-where hod_id in (select id from public.users where clerk_id like 'temp_%');
-
 delete from public.users
 where clerk_id like 'temp_%'
   or email in (
